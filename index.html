@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <title>Sales Statistics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; background: #fff; }
+        .container { max-width: 1100px; margin: auto; }
+        
+        /* តំបន់ដែលត្រូវថតរូប (Graph + Legend) */
+        #capture-area {
+            background: white;
+            padding: 15px;
+        }
+
+        .header-legend { display: flex; gap: 25px; margin-bottom: 15px; font-weight: bold; font-size: 14px; }
+        .item { display: flex; align-items: center; gap: 8px; }
+        .color-box { width: 14px; height: 10px; border-radius: 1px; }
+
+        textarea { width: 100%; height: 80px; margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        .button-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn { border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-weight: bold; color: white; }
+        .btn-generate { background: #333; }
+        .btn-save { background: #27ae60; }
+        .btn:hover { opacity: 0.8; }
+
+        .chart-frame { 
+            border: 2.5px solid #333; 
+            padding: 10px; 
+            height: 500px; 
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <textarea id="dataInput" placeholder="បិទភ្ជាប់ទិន្នន័យពី Excel (ID, Time, Temp)..."></textarea>
+    
+    <div class="button-group">
+        <button class="btn btn-generate" onclick="generateStatistics()">Generate Graph</button>
+        <button class="btn btn-save" onclick="saveAsImage()">Save Photo</button>
+    </div>
+
+    <div id="capture-area">
+        <div class="header-legend">
+            <div class="item">Server IP <div class="color-box" style="background: black;"></div></div>
+            <div class="item">Over <div class="color-box" style="background: red;"></div></div>
+            <div class="item">Below <div class="color-box" style="background: #007bff;"></div></div>
+            <div class="item">Error <div class="color-box" style="background: #ccc;"></div></div>
+        </div>
+
+        <div class="chart-frame">
+            <canvas id="salesChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+let myChart = null;
+
+function generateStatistics() {
+    const input = document.getElementById('dataInput').value;
+    const lines = input.trim().split('\n');
+    
+    const timeLabels = [];
+    const tempData = [];
+
+    lines.forEach(line => {
+        const columns = line.split('\t');
+        if (columns.length >= 3) {
+            timeLabels.push(columns[1].trim()); 
+            tempData.push(parseFloat(columns[2].trim()));
+        }
+    });
+
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    if (myChart) { myChart.destroy(); }
+
+    myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: timeLabels,
+            datasets: [{
+                data: tempData,
+                borderColor: 'red',
+                borderWidth: 1.5,
+                fill: false,
+                pointRadius: 0,
+                tension: 0.1 
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    min: 20.0,
+                    max: 29.5,
+                    ticks: { stepSize: 1.0, font: { weight: 'bold' } },
+                    grid: { color: '#ddd', borderDash: [3, 3] }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }
+                }
+            }
+        }
+    });
+}
+
+// មុខងារសម្រាប់ Save រូបភាព
+function saveAsImage() {
+    const area = document.getElementById('capture-area');
+    html2canvas(area).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'sales-statistics.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+}
+</script>
+
+</body>
+</html>
